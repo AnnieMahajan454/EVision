@@ -1,8 +1,8 @@
-# EVision — Connected Electric Vehicle Analytics Platform
+# EVision - Connected Electric Vehicle Analytics Platform
 
 EVision is a demo production-quality portfolio project showcasing a FastAPI backend, SQL database, telemetry ingestion, and ML-powered predictions for electric vehicles (battery health, driving range, charging recommendations). The project demonstrates clean architecture, training pipelines, and a simple frontend-ready API surface.
 
-Status: work-in-progress — stepwise implementation. This README covers local development and deployment notes.
+This README covers local development and deployment notes.
 
 ## Key Features
 - User authentication (JWT)
@@ -67,9 +67,3 @@ This brings up Postgres + backend. The compose file configures `CREATE_TABLES_ON
 
 ## Tests & CI
 - Add unit tests to `backend/tests/` and a CI workflow to run linters, mypy/ruff, and tests.
-
-## Contributing
-- Follow the stepwise approach: make small, testable changes and open pull requests.
-
-## License
-- MIT (or update as desired)
