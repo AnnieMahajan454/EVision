@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 from typing import Any
 
 import joblib
@@ -9,7 +10,8 @@ from ml.utils.feature_engineering import FEATURE_COLUMNS, build_feature_frame
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-MODEL_PATH = PROJECT_ROOT / "ml" / "models" / "battery_health_model.joblib"
+MODELS_DIR = Path(os.getenv("MODELS_DIR", PROJECT_ROOT / "ml" / "models"))
+MODEL_PATH = MODELS_DIR / "battery_health_model.joblib"
 
 
 class BatteryHealthPredictor:

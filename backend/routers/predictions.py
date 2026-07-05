@@ -5,8 +5,15 @@ from core.config import settings
 from core.dependencies import get_current_user
 from database.session import get_db
 from models.user import User
-from schemas.prediction import BatteryHealthPredictionRequest, BatteryHealthPredictionResponse, PredictionRead
+from schemas.prediction import (
+    BatteryHealthPredictionRequest,
+    BatteryHealthPredictionResponse,
+    RangePredictionRequest,
+    RangePredictionResponse,
+    PredictionRead,
+)
 from services.prediction_service import create_battery_health_prediction, list_vehicle_predictions
+from services.range_prediction_service import create_range_prediction
 from services.vehicle_service import get_vehicle_by_id
 
 router = APIRouter(prefix=f"{settings.api_v1_prefix}/vehicles/{{vehicle_id}}/predictions", tags=["Predictions"])
@@ -24,6 +31,21 @@ def predict_battery_health(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
 
     return create_battery_health_prediction(db, current_user.id, vehicle_id, payload)
+
+
+
+@router.post("/range", response_model=RangePredictionResponse, status_code=status.HTTP_201_CREATED)
+def predict_driving_range(
+    vehicle_id: str,
+    payload: RangePredictionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> RangePredictionResponse:
+    vehicle = get_vehicle_by_id(db, vehicle_id, current_user.id)
+    if vehicle is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vehicle not found")
+
+    return create_range_prediction(db, current_user.id, vehicle_id, payload)
 
 
 @router.get("", response_model=list[PredictionRead])

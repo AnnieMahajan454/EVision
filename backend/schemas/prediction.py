@@ -21,6 +21,22 @@ class BatteryHealthPredictionResponse(BaseModel):
     created_at: datetime
 
 
+class RangePredictionRequest(BaseModel):
+    telemetry: TelemetryRecordCreate
+    model_version: str = Field(default="range-v1", max_length=50)
+
+
+class RangePredictionResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    prediction_id: str
+    vehicle_id: str
+    prediction_type: str
+    predicted_range_km: float
+    model_version: str
+    created_at: datetime
+
+
 class PredictionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

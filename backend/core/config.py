@@ -12,6 +12,11 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://postgres:postgres@localhost:5432/evision",
         validation_alias="DATABASE_URL",
     )
+    # When True, application will run Base.metadata.create_all(engine) on startup
+    create_tables_on_start: bool = Field(default=False, validation_alias="CREATE_TABLES_ON_START")
+
+    # Path where ML model artifacts are stored (absolute or repo-relative)
+    models_dir: str = Field(default="ml/models", validation_alias="MODELS_DIR")
     jwt_secret_key: str = Field(
         default="replace-with-a-long-random-secret",
         validation_alias="JWT_SECRET_KEY",
