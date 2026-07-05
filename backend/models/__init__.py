@@ -1,3 +1,4 @@
 from models.user import User
 from models.vehicle import Vehicle
 from models.telemetry import Telemetry
+from models.prediction import Prediction
