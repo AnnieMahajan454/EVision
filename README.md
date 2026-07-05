@@ -67,3 +67,27 @@ This brings up Postgres + backend. The compose file configures `CREATE_TABLES_ON
 
 ## Tests & CI
 - Add unit tests to `backend/tests/` and a CI workflow to run linters, mypy/ruff, and tests.
+
+## Database migrations (Alembic)
+
+The project includes an Alembic scaffold under `backend/alembic` to manage schema migrations.
+
+Create the initial migration (autogenerate) and apply it:
+
+```bash
+cd backend
+pip install alembic
+alembic -c alembic.ini revision --autogenerate -m "initial"
+alembic -c alembic.ini upgrade head
+```
+
+The Alembic `env.py` reads the `DATABASE_URL` environment variable. For local dev you can use the sqlite `DATABASE_URL=sqlite:///./dev.db`.
+
+Alternative (quick local dev): run the small management script to create tables without Alembic:
+
+```bash
+# from repo root
+python backend/manage_db.py create
+```
+
+Use `python backend/manage_db.py drop` to remove tables.
