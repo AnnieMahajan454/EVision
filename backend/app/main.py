@@ -1,4 +1,10 @@
 from contextlib import asynccontextmanager
+import os
+import sys
+
+# Make the repository root importable so `ml` can be imported when Uvicorn
+# is launched from the `backend/` directory or through reload subprocesses.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

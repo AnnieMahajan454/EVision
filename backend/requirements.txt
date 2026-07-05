@@ -12,3 +12,4 @@ numpy>=1.26,<3.0
 pandas>=2.2,<3.0
 scikit-learn>=1.5,<2.0
 gunicorn>=20.1,<21.0
+httpx2>=2.0,<3.0
