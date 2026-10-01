@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local config
+.env
+
+# Trained models are reproducible from the pipeline
+ml/artifacts/*
+!ml/artifacts/.gitkeep
+
+# Local databases / editors
+*.db
+*.sqlite3
+.vscode/
+.idea/
+
+# Power BI temp files (the .pbix itself is committed)
+powerbi/*.pbix.bak
+~$*.pbix

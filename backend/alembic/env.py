@@ -1,65 +1,35 @@
-from __future__ import with_statement
-import os
-import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
-# make project root importable
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+import app.models  # noqa: F401  (registers all tables on Base.metadata)
+from app.config import settings
+from app.database import Base
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
 config = context.config
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
-# Interpret the config file for Python logging.
-if config.config_file_name is not None:
+if config.config_file_name is not None and config.attributes.get("configure_logger", True):
     fileConfig(config.config_file_name)
-
-# Import the project's metadata (Base) so autogenerate can detect models
-from backend.database.base import Base  # noqa: E402
-
-# ensure models are imported so they register with Base.metadata
-import pkgutil
-import backend.models
-for _, name, _ in pkgutil.iter_modules(backend.models.__path__):
-    __import__(f"backend.models.{name}")
 
 target_metadata = Base.metadata
 
 
-def get_url():
-    return os.environ.get('DATABASE_URL', 'sqlite:///./dev.db')
-
-
-def run_migrations_offline():
-    url = get_url()
+def run_migrations_offline() -> None:
     context.configure(
-        url=url,
-        target_metadata=target_metadata,
-        literal_binds=True,
-        dialect_opts={"paramstyle": "named"},
+        url=config.get_main_option("sqlalchemy.url"), target_metadata=target_metadata, literal_binds=True
     )
-
     with context.begin_transaction():
         context.run_migrations()
 
 
-def run_migrations_online():
-    configuration = config.get_section(config.config_ini_section)
-    configuration['sqlalchemy.url'] = get_url()
+def run_migrations_online() -> None:
     connectable = engine_from_config(
-        configuration,
-        prefix='sqlalchemy.',
-        poolclass=pool.NullPool,
+        config.get_section(config.config_ini_section, {}), prefix="sqlalchemy.", poolclass=pool.NullPool
     )
-
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
-
         with context.begin_transaction():
             context.run_migrations()
 

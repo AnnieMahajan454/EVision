@@ -1,0 +1,4 @@
+-r backend/requirements.txt
+pytest>=8.2,<9.0
+httpx2>=2.0,<3.0
+ruff>=0.6

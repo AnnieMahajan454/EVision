@@ -1,0 +1,41 @@
+{
+  "name": "EVision",
+  "dataColors": [
+    "#0F766E",
+    "#F59E0B",
+    "#2563EB",
+    "#DC2626",
+    "#7C3AED",
+    "#65A30D",
+    "#DB2777",
+    "#64748B"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#1F2937",
+  "tableAccent": "#0F766E",
+  "good": "#16A34A",
+  "neutral": "#F59E0B",
+  "bad": "#DC2626",
+  "maximum": "#0F766E",
+  "center": "#FDE68A",
+  "minimum": "#DC2626",
+  "textClasses": {
+    "title": { "fontFace": "Segoe UI Semibold", "fontSize": 13, "color": "#111827" },
+    "header": { "fontFace": "Segoe UI Semibold", "fontSize": 11, "color": "#374151" },
+    "label": { "fontFace": "Segoe UI", "fontSize": 10, "color": "#4B5563" },
+    "callout": { "fontFace": "Segoe UI Semibold", "fontSize": 24, "color": "#0F766E" }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "border": [{ "show": true, "color": { "solid": { "color": "#E5E7EB" } }, "radius": 6 }],
+        "dropShadow": [{ "show": false }]
+      }
+    },
+    "page": {
+      "*": {
+        "background": [{ "color": { "solid": { "color": "#F8FAFC" } }, "transparency": 0 }]
+      }
+    }
+  }
+}

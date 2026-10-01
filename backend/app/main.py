@@ -1,63 +1,32 @@
-from contextlib import asynccontextmanager
-import os
-import sys
-
-# Make the repository root importable so `ml` can be imported when Uvicorn
-# is launched from the `backend/` directory or through reload subprocesses.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
-
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
-from core.config import settings
-from routers.auth import router as auth_router
-from routers.health import router as health_router
-from routers.predictions import router as predictions_router
-from routers.telemetry import router as telemetry_router
-from routers.vehicles import router as vehicles_router
-from database.session import engine
-from database.base import Base
-
-
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    # Create tables on startup only when explicitly enabled (dev convenience)
-    try:
-        from core.config import settings
-
-        if settings.create_tables_on_start:
-            Base.metadata.create_all(bind=engine)
-    except Exception:
-        # If config isn't available or creation fails, continue startup and
-        # rely on the deployed DB migration process (Alembic) in production.
-        pass
-    yield
-
+from app.config import settings
+from app.database import engine
+from app.routers import auth, charging, fleet, predictions, telemetry, vehicles
 
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    openapi_url=f"{settings.api_v1_prefix}/openapi.json",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    lifespan=lifespan,
+    description=(
+        "Ingests connected-vehicle telemetry and charging sessions into PostgreSQL and serves "
+        "battery-health, range and charging-optimisation insights."
+    ),
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(health_router)
-app.include_router(auth_router)
-app.include_router(vehicles_router)
-app.include_router(telemetry_router)
-app.include_router(predictions_router)
+for router in (
+    auth.router,
+    vehicles.router,
+    telemetry.router,
+    charging.router,
+    predictions.router,
+    fleet.router,
+):
+    app.include_router(router, prefix=settings.api_prefix)
 
 
-@app.get("/", include_in_schema=False)
-async def root() -> dict[str, str]:
-    return {"message": "EVision API is running"}
+@app.get("/health", tags=["health"])
+def health() -> dict[str, str]:
+    with engine.connect() as connection:
+        connection.execute(text("SELECT 1"))
+    return {"status": "ok", "database": "ok"}

@@ -1,0 +1,140 @@
+// EVision – DAX measures
+// Create a blank table called _Measures (Enter data -> one empty column) and add these to it.
+// Display folders are given in the comment above each block.
+
+// ─── Fleet ─────────────────────────────────────────────────────────────────────────────
+
+Vehicles = DISTINCTCOUNT ( dim_vehicle[vehicle_id] )
+
+Trips = COUNTROWS ( fact_trip )
+
+Distance (km) = SUM ( fact_vehicle_daily[distance_km] )
+
+Energy Used (kWh) = SUM ( fact_vehicle_daily[energy_used_kwh] )
+
+Avg Efficiency (Wh/km) = DIVIDE ( [Energy Used (kWh)] * 1000, [Distance (km)] )
+
+Rated Efficiency (Wh/km) =
+DIVIDE (
+    SUMX ( dim_vehicle, dim_vehicle[battery_capacity_kwh] * 1000 ),
+    SUM ( dim_vehicle[rated_range_km] )
+)
+
+Efficiency vs Rated % = DIVIDE ( [Avg Efficiency (Wh/km)], [Rated Efficiency (Wh/km)] ) - 1
+
+Distance per Vehicle per Day (km) =
+DIVIDE ( [Distance (km)], [Vehicles] * DISTINCTCOUNT ( fact_vehicle_daily[date] ) )
+
+// ─── Battery health ───────────────────────────────────────────────────────────────────
+
+// Each vehicle's most recent SoH in the filter context, averaged across vehicles.
+Latest SoH % =
+AVERAGEX (
+    VALUES ( dim_vehicle[vehicle_id] ),
+    VAR LastDay = CALCULATE ( MAX ( fact_battery_health[date] ) )
+    RETURN CALCULATE ( AVERAGE ( fact_battery_health[soh_pct] ), fact_battery_health[date] = LastDay )
+)
+
+First SoH % =
+AVERAGEX (
+    VALUES ( dim_vehicle[vehicle_id] ),
+    VAR FirstDay = CALCULATE ( MIN ( fact_battery_health[date] ) )
+    RETURN CALCULATE ( AVERAGE ( fact_battery_health[soh_pct] ), fact_battery_health[date] = FirstDay )
+)
+
+SoH Fade in Period (pp) = [First SoH %] - [Latest SoH %]
+
+Fade per 10,000 km (pp) = DIVIDE ( [SoH Fade in Period (pp)] * [Vehicles], [Distance (km)] ) * 10000
+
+Vehicles Below 90% SoH =
+COUNTROWS ( FILTER ( VALUES ( dim_vehicle[vehicle_id] ), [Latest SoH %] < 90 ) )
+
+Forecast SoH in 12 Months % =
+CALCULATE (
+    AVERAGE ( fact_battery_health_forecast[predicted_soh_pct] ),
+    fact_battery_health_forecast[horizon_days] = 360,
+    REMOVEFILTERS ( dim_date )
+)
+
+Forecast Fade Next 12 Months (pp) =
+CALCULATE (
+    AVERAGE ( fact_battery_health_forecast[predicted_soh_pct] ),
+    fact_battery_health_forecast[horizon_days] = 0,
+    REMOVEFILTERS ( dim_date )
+) - [Forecast SoH in 12 Months %]
+
+Predicted SoH % = AVERAGE ( fact_battery_health_forecast[predicted_soh_pct] )
+
+DC Fast Energy Share % =
+DIVIDE ( SUM ( fact_vehicle_daily[dc_fast_energy_kwh] ), SUM ( fact_vehicle_daily[energy_charged_kwh] ) )
+
+Full-Charge Session Share % =
+DIVIDE ( SUM ( fact_vehicle_daily[full_charge_sessions] ), SUM ( fact_vehicle_daily[charging_sessions] ) )
+
+Avg Battery Temp (°C) = AVERAGE ( fact_vehicle_daily[avg_battery_temp_c] )
+
+// ─── Range ─────────────────────────────────────────────────────────────────────────────
+
+Real-World Range (km) = AVERAGE ( fact_trip[full_charge_range_km] )
+
+Rated Range (km) = AVERAGE ( dim_vehicle[rated_range_km] )
+
+Range vs Rated % = DIVIDE ( [Real-World Range (km)], [Rated Range (km)] ) - 1
+
+Trip Efficiency (Wh/km) =
+DIVIDE ( SUM ( fact_trip[energy_used_kwh] ) * 1000, SUM ( fact_trip[distance_km] ) )
+
+Range Prediction Error % =
+AVERAGEX (
+    fact_range_prediction,
+    ABS ( fact_range_prediction[predicted_range_km] - fact_range_prediction[actual_range_km] )
+        / fact_range_prediction[actual_range_km]
+)
+
+Baseline Range Error % =
+AVERAGEX (
+    fact_range_prediction,
+    ABS ( fact_range_prediction[baseline_range_km] - fact_range_prediction[actual_range_km] )
+        / fact_range_prediction[actual_range_km]
+)
+
+Error Reduction vs Baseline % = 1 - DIVIDE ( [Range Prediction Error %], [Baseline Range Error %] )
+
+Predicted Range (km) = AVERAGE ( fact_range_prediction[predicted_range_km] )
+
+Actual Range (km) = AVERAGE ( fact_range_prediction[actual_range_km] )
+
+// ─── Charging ──────────────────────────────────────────────────────────────────────────
+
+Charging Sessions = COUNTROWS ( fact_charging_session )
+
+Energy Charged (kWh) = SUM ( fact_charging_session[energy_delivered_kwh] )
+
+Charging Cost (₹) = SUM ( fact_charging_session[cost_inr] )
+
+Avg Cost per kWh (₹) = DIVIDE ( [Charging Cost (₹)], [Energy Charged (kWh)] )
+
+Charging Cost per km (₹) = DIVIDE ( [Charging Cost (₹)], [Distance (km)] )
+
+Home Energy at Peak % =
+VAR Home = FILTER ( fact_charging_session, fact_charging_session[charger_type] = "home_ac" )
+RETURN
+    DIVIDE (
+        SUMX ( Home, fact_charging_session[energy_delivered_kwh] * fact_charging_session[peak_energy_share] ),
+        SUMX ( Home, fact_charging_session[energy_delivered_kwh] )
+    )
+
+Potential Saving (₹) = SUM ( fact_charging_session[potential_saving_inr] )
+
+Potential Saving % of Cost = DIVIDE ( [Potential Saving (₹)], [Charging Cost (₹)] )
+
+Annualised Saving (₹) =
+DIVIDE ( [Potential Saving (₹)], DISTINCTCOUNT ( fact_charging_session[session_date] ) ) * 365
+
+DC Sessions Past 85% =
+CALCULATE ( [Charging Sessions], fact_charging_session[dc_fast_past_taper] = TRUE () )
+
+DC Past-Taper Share % =
+DIVIDE ( [DC Sessions Past 85%], CALCULATE ( [Charging Sessions], fact_charging_session[is_dc_fast] = TRUE () ) )
+
+Avg Session Duration (min) = AVERAGE ( fact_charging_session[duration_min] )
