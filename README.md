@@ -1,6 +1,6 @@
 # EVision: Connected Vehicle Analytics Platform
 
-[![CI](https://github.com/AnnieMahajan454/EVision/actions/workflows/ci.yml/badge.svg)](https://github.com/AnnieMahajan454/EVision/actions/workflows/ci.yml)
+[![CI](https://github.com/AnnieMahajan454/EVision/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/AnnieMahajan454/EVision/actions/workflows/ci.yml)
 
 EVision collects telemetry from a fleet of connected electric vehicles, stores it in **PostgreSQL** through a **FastAPI** ingestion service, and turns it into **Power BI** dashboards for battery health monitoring, range prediction and charging cost optimisation.
 
